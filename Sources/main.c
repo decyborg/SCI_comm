@@ -4,10 +4,13 @@
 #include "communication.h"
 
 #define BUSCLK	25000000
-
+int mess_point = 0;
+char mess_flag = 0;
+char received_message[MESS_MAX_LENGTH];
 
 void main(void) {
 	char user_name[USERNAME_MAX_LENGTH];
+	char message2send[MESS_MAX_LENGTH];
 	
 	clock_init(BUSCLK);
 	EnableInterrupts;
@@ -17,10 +20,32 @@ void main(void) {
 	get_username(SCI0, user_name);
 	send_string("\n\rYour user name is: \n\r", SCI0);
 	send_string(user_name, SCI0);
+	send_string("\n\rTo use this terminal simply write your message and press enter to send it\n\r", SCI0);
+	sci_init(115200, BUSCLK, SCI1);
+	SCI1CR2_RIE = 1;	/* Enable receive interrupt */
 	
 	for(;;) {
-		echo(SCI0);
+		get_message(SCI0, message2send);
+		send_message(SCI0, user_name, message2send);
+		if(mess_flag == 1){
+			send_string(received_message, SCI0);
+		}
 	} /* loop forever */
 	/* please make sure that you never leave main */
 
+}
+
+interrupt VectorNumber_Vsci1 void SCI1_ISR(){
+	char tmp = SCI1DRL;
+	if(tmp != '\n'){
+		if(mess_point < MESS_MAX_LENGTH - 1){ 
+			received_message[mess_point++] = tmp;
+		} else{
+			received_message[++mess_point] = '\n';
+		}
+	} else{
+		received_message[++mess_point] = '\n';
+		mess_flag = 1;
+	}
+	SCI1SR1_RDRF = 1;
 }
