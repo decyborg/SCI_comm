@@ -27,25 +27,33 @@ void main(void) {
 	for(;;) {
 		get_message(SCI0, message2send);
 		send_message(SCI0, user_name, message2send);
-		if(mess_flag == 1){
-			send_string(received_message, SCI0);
-		}
 	} /* loop forever */
 	/* please make sure that you never leave main */
 
 }
 
 interrupt VectorNumber_Vsci1 void SCI1_ISR(){
+	int tmp_reg = SCI1SR1; /* Read register */
 	char tmp = SCI1DRL;
-	if(tmp != '\n'){
-		if(mess_point < MESS_MAX_LENGTH - 1){ 
-			received_message[mess_point++] = tmp;
+	if(tmp != '\r'){
+		if(mess_point < MESS_MAX_LENGTH - 2){ 
+			received_message[mess_point] = tmp;
+			++mess_point;
 		} else{
-			received_message[++mess_point] = '\n';
+			++mess_point;
+			received_message[mess_point] = '\r';
+			++mess_point;
+			received_message[mess_point] = 0;
+			mess_point = 0;
+			mess_flag = 1;
 		}
 	} else{
-		received_message[++mess_point] = '\n';
+		++mess_point;
+		received_message[mess_point] = '\r';
+		++mess_point;
+		received_message[mess_point] = 0;
+		mess_point = 0;
 		mess_flag = 1;
+		send_string(received_message, SCI0);
 	}
-	SCI1SR1_RDRF = 1;
 }
