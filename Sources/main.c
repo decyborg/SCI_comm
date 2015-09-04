@@ -26,7 +26,7 @@ void main(void) {
 	
 	for(;;) {
 		get_message(SCI0, message2send);
-		send_message(SCI0, user_name, message2send);
+		send_message(SCI0, SCI1, user_name, message2send);
 	} /* loop forever */
 	/* please make sure that you never leave main */
 
@@ -36,24 +36,20 @@ interrupt VectorNumber_Vsci1 void SCI1_ISR(){
 	int tmp_reg = SCI1SR1; /* Read register */
 	char tmp = SCI1DRL;
 	if(tmp != '\r'){
-		if(mess_point < MESS_MAX_LENGTH - 2){ 
-			received_message[mess_point] = tmp;
-			++mess_point;
+		if(mess_point < MESS_MAX_LENGTH - 3){		/* Maximum length minus terminating sequence \r\a NULL */ 
+			received_message[mess_point++] = tmp;	/* Write character and advance buffer pointer */
 		} else{
-			++mess_point;
-			received_message[mess_point] = '\r';
-			++mess_point;
-			received_message[mess_point] = 0;
-			mess_point = 0;
-			mess_flag = 1;
+			received_message[mess_point++] = '\r';	/* Write carriage return and advance buffer pointer */	
+			received_message[mess_point++] = '\a';	/* Concatenate beep at end of string and advance buffer pointer */
+			received_message[mess_point] = 0;		/* End message with NULL character */
+			mess_point = 0;							/* Reset buffer pointer */
+			send_string(received_message, SCI0);		/* Send received message to terminal */
 		}
 	} else{
-		++mess_point;
-		received_message[mess_point] = '\r';
-		++mess_point;
-		received_message[mess_point] = 0;
-		mess_point = 0;
-		mess_flag = 1;
-		send_string(received_message, SCI0);
+		received_message[mess_point++] = '\r';		
+		received_message[mess_point++] = '\a';		/* Concatenate beep at end of string */
+		received_message[mess_point] = 0;			/* End message with NULL character */
+		mess_point = 0;								/* Reset buffer pointer */
+		send_string(received_message, SCI0);		/* Send received message to terminal */
 	}
 }

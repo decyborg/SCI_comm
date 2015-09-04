@@ -14,7 +14,7 @@
 
 /* Prototypes */
 void get_username(unsigned int sci_channel, char* store_string);
-void send_message(unsigned int sci_channel, char* user_name, char* message);
+void send_message(unsigned int sci_channel_terminal, unsigned int sci_channel_network, char* user_name, char* message);
 void get_message(unsigned int sci_channel, char* store_string);
 
 #endif /* COMMUNICATION_H_ */
